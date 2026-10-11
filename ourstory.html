@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ourstory.exe</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        deepDark: '#0f0a1e',
+                        panelBg: '#181033',
+                        cardBg: '#211642',
+                        neonViolet: '#a855f7',
+                        neonPurple: '#8b5cf6',
+                        neonMagenta: '#ec4899',
+                        softLilac: '#d8b4fe',
+                        goldAccent: '#fbbf24',
+                        darkBorder: '#32235e'
+                    },
+                    fontFamily: {
+                        mono: ['Fira Code', 'JetBrains Mono', 'Courier New', 'monospace'],
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome CDN & Canvas Confetti CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;600;700;800&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f0a1e;
+            color: #f1f5f9;
+            overflow-x: hidden;
+            padding-bottom: 90px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f0a1e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #8b5cf6;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ec4899;
+        }
+
+        .text-glow-violet {
+            text-shadow: 0 0 12px rgba(168, 85, 247, 0.7), 0 0 25px rgba(168, 85, 247, 0.4);
+        }
+        .box-glow-violet {
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.25), inset 0 0 12px rgba(168, 85, 247, 0.1);
+        }
+        .box-glow-gold {
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.35), inset 0 0 15px rgba(251, 191, 36, 0.15);
+        }
+
+        .glass-panel {
+            background: rgba(24, 16, 51, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(168, 85, 247, 0.25);
+        }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .eq-bar {
+            width: 3px;
+            background-color: #a855f7;
+            border-radius: 3px;
+            animation: bounceEq 1s ease-in-out infinite alternate;
+        }
+        .eq-bar:nth-child(1) { height: 8px; animation-delay: 0.1s; }
+        .eq-bar:nth-child(2) { height: 16px; animation-delay: 0.3s; }
+        .eq-bar:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+        .eq-bar:nth-child(4) { height: 18px; animation-delay: 0.4s; }
+
+        @keyframes bounceEq {
+            0% { transform: scaleY(0.3); }
+            100% { transform: scaleY(1.2); }
+        }
+
+        .paused-eq .eq-bar {
+            animation-play-state: paused;
+            transform: scaleY(0.4);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between relative selection:bg-neonMagenta selection:text-white">
+
+    <canvas id="bg-canvas"></canvas>
+
+    <header class="sticky top-0 z-40 glass-panel border-b border-darkBorder px-4 py-3">
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
+            
+            <div class="flex items-center justify-between w-full md:w-auto">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-900 to-neonMagenta border border-neonViolet flex items-center justify-center text-neonViolet shadow-lg">
+                        <i class="fa-solid fa-code-branch text-base"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-mono text-sm font-bold text-neonViolet text-glow-violet tracking-wider">
+                        ourstory.exe
+                        </h1>
+                        <p class="text-[10px] text-gray-400 flex items-center gap-1.5 font-mono">
+                            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                            <span id="header-status">BRANCH: MAIN // SECURE</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 md:hidden">
+                    <button onclick="toggleMusicWidget()" class="p-2 rounded-lg bg-cardBg border border-darkBorder text-neonMagenta hover:text-white text-xs flex items-center gap-1 font-mono">
+                        <i class="fa-solid fa-music"></i>
+                    </button>
+                    <button onclick="openConfigModal()" class="p-2 rounded-lg bg-cardBg border border-darkBorder text-gray-300 hover:text-neonMagenta text-xs">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Timeline Progress Tracker -->
+            <div class="flex items-center gap-1.5 sm:gap-3 text-[11px] font-mono w-full md:w-auto justify-center overflow-x-auto py-1">
+                <div id="step-node-1" class="flex items-center gap-1 opacity-50 transition-all">
+                    <span class="w-6 h-6 rounded-full bg-violet-900/60 border border-neonViolet flex items-center justify-center text-white text-[10px] font-bold">1</span>
+                    <span class="text-gray-300 font-semibold"></span>
+                </div>
+                <span class="text-gray-600">→</span>
+                <div id="step-node-2" class="flex items-center gap-1 opacity-50 transition-all">
+                    <span class="w-6 h-6 rounded-full bg-violet-900/60 border border-neonViolet flex items-center justify-center text-white text-[10px] font-bold">2</span>
+                    <span class="text-gray-300 font-semibold"></span>
+                </div>
+                <span class="text-gray-600">→</span>
+                <div id="step-node-3" class="flex items-center gap-1 opacity-50 transition-all">
+                    <span class="w-6 h-6 rounded-full bg-amber-900/60 border border-amber-400 flex items-center justify-center text-amber-300 text-[10px] font-bold">3</span>
+                    <span class="text-gray-300 font-semibold"></span>
+                </div>
+                <span class="text-gray-600">→</span>
+                <div id="step-node-4" class="flex items-center gap-1 opacity-50 transition-all">
+                    <span class="w-6 h-6 rounded-full bg-pink-900/60 border border-neonMagenta flex items-center justify-center text-neonMagenta text-[10px] font-bold"><i class="fa-solid fa-heart text-[8px]"></i></span>
+                    <span class="text-gray-300 font-semibold">Final</span>
+                </div>
+            </div>
+
+            <div class="hidden md:flex items-center gap-3">
+                <button onclick="toggleMusicWidget()" class="px-3 py-1.5 rounded-xl bg-cardBg border border-neonMagenta/40 text-neonMagenta hover:bg-neonMagenta hover:text-white transition text-xs flex items-center gap-2 font-mono shadow-md">
+                    <i class="fa-solid fa-compact-disc text-sm animate-spin" style="animation-duration: 4s;"></i>
+                    <span>Trilha Sonora</span>
+                </button>
+                <button onclick="openConfigModal()" title="Editar Pistas, Senhas e Playlist" class="px-3 py-1.5 rounded-xl bg-cardBg border border-darkBorder text-gray-300 hover:text-neonViolet transition text-xs flex items-center gap-2 font-mono">
+                    <i class="fa-solid fa-gear text-sm"></i>
+                    <span>Configurar</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto w-full px-4 py-8 z-10 flex-grow space-y-8">
+
+        <section class="glass-panel rounded-3xl p-6 sm:p-8 text-center space-y-4 relative overflow-hidden box-glow-violet">
+            <div class="absolute -top-12 -right-12 w-36 h-36 bg-neonMagenta/15 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-12 -left-12 w-36 h-36 bg-neonViolet/15 rounded-full blur-3xl pointer-events-none"></div>
+
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-neonPurple/20 border border-neonPurple/40 rounded-full text-xs font-mono text-softLilac uppercase tracking-widest">
+                </i> Para o homem dos olhos mais lindos
+            </span>
+            <h2 id="hero-title" class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+                Portal dos enigmas
+            </h2>
+            <p id="hero-subtitle" class="text-xs sm:text-sm text-gray-300 max-w-xl mx-auto leading-relaxed">
+                Digite os códigos das nossas datas mais marcantes para desbloquear cada nível e finalmente abrir suas surpresas!
+            </p>
+        </section>
+
+        <!-- LEVEL CARDS -->
+        <div class="space-y-6">
+
+            <!-- LEVEL 1: 13/06 -->
+            <div id="level-card-1" class="glass-panel rounded-2xl p-5 sm:p-6 space-y-4 relative transition-all duration-500 border-l-4 border-l-neonViolet">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-darkBorder pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="w-9 h-9 rounded-xl bg-violet-900/40 border border-neonViolet flex items-center justify-center text-neonViolet font-mono font-bold text-sm">01</span>
+                        <div>
+                            <h3 id="lvl1-title-display" class="font-bold text-white text-sm sm:text-base font-mono">Level 1: git init</h3>
+                            <p class="text-[10px] text-gray-400 font-mono">DATA DE INICIALIZAÇÃO DO REPOSITÓRIO</p>
+                        </div>
+                    </div>
+                    <span id="lvl1-badge" class="px-2.5 py-1 rounded bg-violet-900/30 border border-darkBorder text-amber-400 font-mono text-[11px] flex items-center gap-1">
+                        <i class="fa-solid fa-lock text-[10px]"></i> <span id="lvl1-status-text">BLOQUEADO</span>
+                    </span>
+                </div>
+
+                <div id="lvl1-locked-view" class="space-y-3">
+                    <p id="lvl1-prompt-display" class="text-xs sm:text-sm text-gray-300">
+                        Pista: Qual é a data em que a gente se conheceu pela primeira vez? (Formato DDMM ou DD/MM)
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-2 max-w-lg">
+                        <input type="text" id="lvl1-input" placeholder="Digite a data..." class="w-full px-4 py-2.5 rounded-xl bg-cardBg border border-darkBorder text-xs sm:text-sm text-white focus:outline-none focus:border-neonViolet font-mono">
+                        <button onclick="unlockLevel(1)" class="px-5 py-2.5 bg-gradient-to-r from-neonPurple to-neonViolet hover:from-purple-600 hover:to-violet-600 text-white font-bold rounded-xl text-xs sm:text-sm font-mono flex items-center justify-center gap-2">
+                            <span>EXECUTAR</span>
+                            <i class="fa-solid fa-terminal text-xs"></i>
+                        </button>
+                    </div>
+                    <p id="lvl1-feedback" class="text-xs font-mono hidden"></p>
+                </div>
+
+                <div id="lvl1-unlocked-view" class="hidden space-y-3 p-4 rounded-xl bg-cardBg/90 border border-neonViolet/40 text-xs sm:text-sm">
+                    <div class="flex items-center gap-2 text-emerald-400 font-mono font-bold">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>COMMIT INICIAL EXECUTADO COM SUCESSO!</span>
+                    </div>
+                    <p id="lvl1-message-display" class="text-gray-200 leading-relaxed font-sans">
+                        Dia 13/06 foi o dia em que nos vimos a primeira vez. E quem diria, naquele dia nenhum de nós imaginou que estariamos aqui agora.
+                    </p>
+                    <div class="p-3 bg-deepDark rounded-xl border border-neonViolet/30 text-neonViolet font-mono flex items-center gap-2">
+                        <i class="fa-solid fa-gift text-neonMagenta text-base"></i>
+                        <span id="lvl1-gift-display">PRESENTE LIBERADO: Pegue o pacote #1!</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LEVEL 2: 08/08 -->
+            <div id="level-card-2" class="glass-panel rounded-2xl p-5 sm:p-6 space-y-4 relative transition-all duration-500 border-l-4 border-l-neonMagenta opacity-75">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-darkBorder pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="w-9 h-9 rounded-xl bg-pink-900/40 border border-neonMagenta flex items-center justify-center text-neonMagenta font-mono font-bold text-sm">02</span>
+                        <div>
+                            <h3 id="lvl2-title-display" class="font-bold text-white text-sm sm:text-base font-mono">Level 2: first_spark.exe</h3>
+                            <p class="text-[10px] text-gray-400 font-mono">EXECUÇÃO DO PRIMEIRO BEIJO</p>
+                        </div>
+                    </div>
+                    <span id="lvl2-badge" class="px-2.5 py-1 rounded bg-pink-900/30 border border-darkBorder text-amber-400 font-mono text-[11px] flex items-center gap-1">
+                        <i class="fa-solid fa-lock text-[10px]"></i> <span id="lvl2-status-text">AGUARDANDO LEVEL 1</span>
+                    </span>
+                </div>
+
+                <div id="lvl2-locked-view" class="space-y-3">
+                    <p id="lvl2-prompt-display" class="text-xs sm:text-sm text-gray-300">
+                        Pista: Qual é a data do nosso primeiro beijo? (Formato DDMM ou DD/MM)
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-2 max-w-lg">
+                        <input type="text" id="lvl2-input" disabled placeholder="Desbloqueie o Level 1 primeiro..." class="w-full px-4 py-2.5 rounded-xl bg-cardBg/50 border border-darkBorder text-xs sm:text-sm text-gray-500 focus:outline-none font-mono cursor-not-allowed">
+                        <button id="lvl2-btn" disabled onclick="unlockLevel(2)" class="px-5 py-2.5 bg-gray-700 text-gray-400 font-bold rounded-xl text-xs sm:text-sm font-mono cursor-not-allowed">
+                            <span>EXECUTAR</span>
+                        </button>
+                    </div>
+                    <p id="lvl2-feedback" class="text-xs font-mono hidden"></p>
+                </div>
+
+                <div id="lvl2-unlocked-view" class="hidden space-y-3 p-4 rounded-xl bg-cardBg/90 border border-neonMagenta/40 text-xs sm:text-sm">
+                    <div class="flex items-center gap-2 text-emerald-400 font-mono font-bold">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>SINAL ENVIADO COM SUCESSO!</span>
+                    </div>
+                    <p id="lvl2-message-display" class="text-gray-200 leading-relaxed font-sans">
+                        Dia 08/08 foi quando você tomou atitude e me deixou sem jeito pela primeira vez, até hoje não sei explicar o que eu senti, mas sei que algo mudou na minha cabeça depois disso.
+                    </p>
+                    <div class="p-3 bg-deepDark rounded-xl border border-neonMagenta/30 text-neonMagenta font-mono flex items-center gap-2">
+                        <i class="fa-solid fa-gift text-neonMagenta text-base"></i>
+                        <span id="lvl2-gift-display">PRESENTE LIBERADO: Pegue o pacote #2!</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LEVEL 3: 11/10 (O Colar) -->
+            <div id="level-card-3" class="glass-panel rounded-2xl p-5 sm:p-6 space-y-4 relative transition-all duration-500 border-2 border-amber-500/40 opacity-75 box-glow-gold">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-amber-500/30 pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400 flex items-center justify-center text-amber-300 font-mono font-bold text-base shadow-md">
+                            <i class="fa-solid fa-gem text-amber-400"></i>
+                        </span>
+                        <div>
+                            <span class="text-[10px] font-mono text-amber-400 uppercase tracking-widest font-bold">MARCO PRINCIPAL // COMMIT MAIN</span>
+                            <h3 id="lvl3-title-display" class="font-bold text-amber-200 text-sm sm:text-base font-mono">Level 3: git commit -m "Namoro"</h3>
+                        </div>
+                    </div>
+                    <span id="lvl3-badge" class="px-2.5 py-1 rounded bg-amber-900/30 border border-amber-500/30 text-amber-400 font-mono text-[11px] flex items-center gap-1">
+                        <i class="fa-solid fa-lock text-[10px]"></i> <span id="lvl3-status-text">AGUARDANDO LEVEL 2</span>
+                    </span>
+                </div>
+
+                <div id="lvl3-locked-view" class="space-y-3">
+                    <p id="lvl3-prompt-display" class="text-xs sm:text-sm text-gray-200">
+                        Pista Especial: Qual é a data oficial em que o nosso namoro foi oficializado? (Formato DDMM ou DD/MM)
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-2 max-w-lg">
+                        <input type="text" id="lvl3-input" disabled placeholder="Desbloqueie o Level 2 primeiro..." class="w-full px-4 py-2.5 rounded-xl bg-cardBg/50 border border-darkBorder text-xs sm:text-sm text-gray-500 focus:outline-none font-mono cursor-not-allowed">
+                        <button id="lvl3-btn" disabled onclick="unlockLevel(3)" class="px-5 py-2.5 bg-gray-700 text-gray-400 font-bold rounded-xl text-xs sm:text-sm font-mono cursor-not-allowed">
+                            <span>EXECUTAR</span>
+                        </button>
+                    </div>
+                    <p id="lvl3-feedback" class="text-xs font-mono hidden"></p>
+                </div>
+
+                <div id="lvl3-unlocked-view" class="hidden space-y-3 p-4 rounded-xl bg-deepDark/90 border border-amber-400/50 text-xs sm:text-sm">
+                    <div class="flex items-center gap-2 text-amber-300 font-mono font-bold">
+                        <i class="fa-solid fa-crown text-amber-400"></i>
+                        <span>ATUALIZADO PARA O PLANO PREMIUM</span>
+                    </div>
+                    <p id="lvl3-message-display" class="text-gray-100 leading-relaxed font-sans">
+                        Dia 11/10 foi o dia do SIM mais lindo e feliz da minha vida. Você me fez sentir coisas extraordinárias nesse pouco tempo que te conheço, quem diria em 4 meses estariamos aqui.
+                    </p>
+                    <div class="p-3 bg-amber-950/40 rounded-xl border border-amber-400/40 text-amber-200 font-mono flex items-center gap-2">
+                        <i class="fa-solid fa-gem text-amber-400 text-lg animate-bounce"></i>
+                        <span id="lvl3-gift-display">PRESENTE ESPECIAL LIBERADO: Abra a caixinha que você tanto esperou!</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LEVEL 4: A Carta Secreta -->
+            <div id="level-card-4" class="glass-panel rounded-2xl p-5 sm:p-6 space-y-4 relative transition-all duration-500 border-l-4 border-l-pink-500 opacity-75">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-darkBorder pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="w-9 h-9 rounded-xl bg-pink-900/40 border border-neonMagenta flex items-center justify-center text-neonMagenta font-mono font-bold text-sm">04</span>
+                        <div>
+                            <h3 id="lvl4-title-display" class="font-bold text-white text-sm sm:text-base font-mono">Level 4: readme.md (A Carta Secreta)</h3>
+                            <p class="text-[10px] text-gray-400 font-mono">PAYLOAD CRIPTOGRAFADO // CARTA DE AMOR</p>
+                        </div>
+                    </div>
+                    <span id="lvl4-badge" class="px-2.5 py-1 rounded bg-pink-900/30 border border-darkBorder text-amber-400 font-mono text-[11px] flex items-center gap-1">
+                        <i class="fa-solid fa-lock text-[10px]"></i> <span id="lvl4-status-text">AGUARDANDO LEVEL 3</span>
+                    </span>
+                </div>
+
+                <div id="lvl4-locked-view" class="space-y-3">
+                    <p id="lvl4-prompt-display" class="text-xs sm:text-sm text-gray-300">
+                        Pista Final: Do que você me chama sabendo que eu me desmancho inteira só de escutar?
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-2 max-w-lg">
+                        <input type="text" id="lvl4-input" disabled placeholder="Desbloqueie o Level 3 primeiro..." class="w-full px-4 py-2.5 rounded-xl bg-cardBg/50 border border-darkBorder text-xs sm:text-sm text-gray-500 focus:outline-none font-mono cursor-not-allowed">
+                        <button id="lvl4-btn" disabled onclick="unlockLevel(4)" class="px-5 py-2.5 bg-gray-700 text-gray-400 font-bold rounded-xl text-xs sm:text-sm font-mono cursor-not-allowed">
+                            <span>ABRIR CARTA</span>
+                        </button>
+                    </div>
+                    <p id="lvl4-feedback" class="text-xs font-mono hidden"></p>
+                </div>
+
+                <div id="lvl4-unlocked-view" class="hidden space-y-4 p-5 rounded-xl bg-cardBg/90 border border-neonMagenta/50">
+                    <div class="flex items-center gap-2 text-neonMagenta font-mono font-bold text-xs sm:text-sm">
+                        <i class="fa-solid fa-heart"></i>
+                        <span>PAYLOAD DECRIPTADO COM SUCESSO!</span>
+                    </div>
+
+                    <div class="p-6 rounded-2xl bg-deepDark border border-neonMagenta/40 space-y-4 relative overflow-hidden shadow-2xl">
+                        <div class="absolute -right-8 -top-8 w-24 h-24 bg-neonMagenta/10 rounded-full blur-xl"></div>
+                        <h4 class="font-mono text-neonViolet font-bold text-sm border-b border-darkBorder pb-2">
+                            // CARTA_DE_AMOR_MANUSCRITA.TXT
+                        </h4>
+                        <div id="lvl4-message-display" class="text-gray-200 text-xs sm:text-sm leading-relaxed space-y-3 italic font-sans border-l-2 border-neonMagenta pl-4 py-1">
+                            Amor, eu te disse que por você valia a pena tentar novamente escrever cartas e aqui está minha tentativa, saiba que independente de tudo, eu te amo e sempre vou te amar!
+                        </div>
+                    </div>
+
+                    <div class="pt-2 text-center">
+                        <button onclick="triggerGrandCelebration()" class="px-6 py-3 bg-gradient-to-r from-neonMagenta via-purple-600 to-neonViolet hover:opacity-90 text-white font-bold rounded-xl text-xs sm:text-sm font-mono shadow-xl inline-flex items-center gap-2">
+                            <i class="fa-solid fa-sparkles"></i>
+                            <span>COMEMORAR CONCLUSAO!</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <div id="music-widget" class="fixed bottom-3 right-3 sm:right-6 z-50 transition-all duration-500 max-w-sm w-[calc(100vw-24px)] sm:w-96">
+        
+        <div id="music-panel" class="glass-panel border border-neonMagenta/40 rounded-3xl p-4 shadow-2xl space-y-3 hidden box-glow-violet">
+            <div class="flex justify-between items-center border-b border-darkBorder pb-2">
+                <div class="flex items-center gap-2">
+                    <div id="eq-indicator" class="flex items-end gap-0.5 h-4 paused-eq">
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                    </div>
+                    <span class="font-mono text-xs font-bold text-neonMagenta flex items-center gap-1.5">
+                        <i class="fa-solid fa-music"></i> TRILHA SONORA
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="togglePlayerTab('embed')" id="tab-btn-embed" class="px-2 py-1 rounded bg-neonMagenta text-white font-mono text-[10px] font-bold">YouTube / Spotify</button>
+                    <button onclick="togglePlayerTab('custom')" id="tab-btn-custom" class="px-2 py-1 rounded bg-cardBg text-gray-400 font-mono text-[10px]">MP3 Local</button>
+                    <button onclick="toggleMusicWidget()" class="text-gray-400 hover:text-white text-sm pl-1"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+
+            <!-- YouTube & Spotify Embed Container -->
+            <div id="player-view-embed" class="space-y-2">
+                <div class="rounded-2xl overflow-hidden border border-neonViolet/30 bg-black/40 h-44 shadow-inner">
+                    <iframe id="media-embed-iframe" 
+                        src="https://www.youtube.com/embed/jfKfPfyJRdk?enablejsapi=1" 
+                        width="100%" 
+                        height="100%" 
+                        frameBorder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allowfullscreen 
+                        loading="lazy">
+                    </iframe>
+                </div>
+                <div class="flex items-center justify-between px-1 text-[10px] font-mono">
+                    <span id="player-type-hint" class="text-gray-400">💡 Links no ⚙️</span>
+                    <a id="embed-direct-link" href="https://www.youtube.com" target="_blank" class="text-red-400 hover:underline flex items-center gap-1 font-bold">
+                        <span>Abrir Link</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Custom HTML5 Audio Player View with Local MP3 File Chooser -->
+            <div id="player-view-custom" class="hidden space-y-3 p-1">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-violet-600 to-neonMagenta flex items-center justify-center text-white text-lg shadow-lg">
+                        <i class="fa-solid fa-headphones"></i>
+                    </div>
+                    <div class="flex-grow min-w-0">
+                        <h5 id="track-title" class="font-mono text-xs font-bold text-white truncate">music.mp3</h5>
+                        <p id="track-artist" class="text-[10px] text-softLilac font-mono truncate"></p>
+                    </div>
+                </div>
+
+                <!-- Botão de Selecionar Arquivo do Celular/PC -->
+                <div class="pt-1">
+                    <label for="local-file-input" class="w-full py-2 px-3 bg-neonViolet/20 hover:bg-neonViolet/40 border border-neonViolet/50 rounded-xl text-softLilac hover:text-white font-mono text-xs flex items-center justify-center gap-2 cursor-pointer transition shadow">
+                        <i class="fa-solid fa-file-audio text-neonMagenta"></i>
+                        <span>📂 Escolher MP3 do Celular/PC</span>
+                    </label>
+                    <input type="file" id="local-file-input" accept="audio/*" class="hidden">
+                </div>
+
+                <!-- Custom Player Controls -->
+                <div class="space-y-1.5 pt-1">
+                    <input type="range" id="audio-seek" value="0" max="100" class="w-full h-1 bg-darkBorder rounded-lg appearance-none cursor-pointer accent-neonMagenta" oninput="seekAudio(this.value)">
+                    <div class="flex justify-between text-[10px] text-gray-400 font-mono">
+                        <span id="audio-curr-time">0:00</span>
+                        <span id="audio-dur-time">0:00</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center pt-1">
+                    <button onclick="prevTrack()" class="text-gray-300 hover:text-neonViolet text-sm"><i class="fa-solid fa-backward-step"></i></button>
+                    <button onclick="toggleCustomAudio()" id="custom-play-btn" class="w-10 h-10 rounded-full bg-gradient-to-r from-neonPurple to-neonMagenta text-white flex items-center justify-center shadow-lg hover:scale-105 transition">
+                        <i class="fa-solid fa-play text-xs pl-0.5"></i>
+                    </button>
+                    <button onclick="nextTrack()" class="text-gray-300 hover:text-neonViolet text-sm"><i class="fa-solid fa-forward-step"></i></button>
+                    <div class="flex items-center gap-1.5 w-20">
+                        <i class="fa-solid fa-volume-high text-xs text-gray-400"></i>
+                        <input type="range" id="audio-volume" min="0" max="1" step="0.1" value="0.7" class="w-full h-1 bg-darkBorder rounded-lg appearance-none cursor-pointer accent-neonViolet" oninput="setAudioVolume(this.value)">
+                    </div>
+                </div>
+
+                <audio id="native-audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" preload="none"></audio>
+            </div>
+        </div>
+
+        <button id="music-trigger-btn" onclick="toggleMusicWidget()" class="glass-panel border border-neonMagenta/50 text-white p-3 rounded-full shadow-2xl flex items-center gap-2 hover:scale-105 transition font-mono text-xs ml-auto box-glow-violet">
+            <span class="w-3 h-3 rounded-full bg-neonMagenta animate-ping"></span>
+            <i class="fa-solid fa-compact-disc text-neonMagenta text-base animate-spin" style="animation-duration: 5s;"></i>
+            <span class="hidden sm:inline font-bold">Música</span>
+        </button>
+    </div>
+
+    <div id="config-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-panelBg border border-neonViolet/40 rounded-3xl max-w-xl w-full p-6 space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="flex justify-between items-center border-b border-darkBorder pb-3">
+                <h3 class="font-mono text-sm font-bold text-neonViolet flex items-center gap-2">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>PAINEL DE CONFIGURAÇÃO DAS PISTAS & MÚSICA</span>
+                </h3>
+                <button onclick="closeConfigModal()" class="text-gray-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="p-3 bg-deepDark rounded-xl border border-neonMagenta/40 space-y-2 text-xs font-mono">
+                <label class="text-neonMagenta font-bold flex items-center gap-1.5">
+                    <i class="fa-brands fa-youtube text-red-500"></i> / <i class="fa-brands fa-spotify text-emerald-400"></i> Link de Música ou Playlist (YouTube ou Spotify):
+                </label>
+                <input type="text" id="cfg-media-url" placeholder="Cole o link do YouTube ou Spotify" class="w-full px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs">
+            </div>
+
+            <div class="p-3 bg-deepDark rounded-xl border border-neonViolet/40 space-y-2 text-xs font-mono">
+                <label class="text-softLilac font-bold flex items-center gap-1.5">
+                    <i class="fa-solid fa-music text-neonViolet"></i> Áudio MP3 em arquivo local ou URL:
+                </label>
+                <div class="space-y-2">
+                    <input type="text" id="cfg-mp3-title" placeholder="Nome da Música (ex: nossa_musica.mp3)" class="w-full px-3 py-1.5 bg-cardBg border border-darkBorder rounded text-white text-xs">
+                    <input type="text" id="cfg-mp3-artist" placeholder="Artista / Descrição" class="w-full px-3 py-1.5 bg-cardBg border border-darkBorder rounded text-white text-xs">
+                    <input type="text" id="cfg-mp3-url" placeholder="Nome do arquivo ex: nossa_musica.mp3 ou link completo" class="w-full px-3 py-1.5 bg-cardBg border border-darkBorder rounded text-white text-xs">
+                </div>
+            </div>
+
+            <div class="space-y-4 text-xs font-mono">
+                <!-- Config Level 1 -->
+                <div class="p-3 bg-deepDark rounded-xl border border-darkBorder space-y-2">
+                    <label class="text-neonViolet font-bold block">1. Level 1 (13/06 - Primeiro Contato):</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="cfg-l1-ans" placeholder="Senha ex: 1306" class="px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs">
+                        <input type="text" id="cfg-l1-title" placeholder="Título" class="px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs">
+                    </div>
+                    <textarea id="cfg-l1-prompt" rows="1" placeholder="Pergunta" class="w-full px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs"></textarea>
+                    <textarea id="cfg-l1-msg" rows="2" placeholder="Mensagem" class="w-full px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs"></textarea>
+                    <input type="text" id="cfg-l1-gift" placeholder="Instrução do Presente" class="w-full px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs">
+                </div>
+
+                <!-- Config Level 2 -->
+                <div class="p-3 bg-deepDark rounded-xl border border-darkBorder space-y-2">
+                    <label class="text-neonMagenta font-bold block">2. Level 2 (08/08 - Primeiro Beijo):</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="cfg-l2-ans" placeholder="Senha ex: 0808" class="px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs">
+                        <input type="text" id="cfg-l2-title" placeholder="Título" class="px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs">
+                    </div>
+                    <textarea id="cfg-l2-prompt" rows="1" placeholder="Pergunta" class="w-full px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs"></textarea>
+                    <textarea id="cfg-l2-msg" rows="2" placeholder="Mensagem" class="w-full px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs"></textarea>
+                    <input type="text" id="cfg-l2-gift" placeholder="Instrução do Presente" class="w-full px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs">
+                </div>
+
+                <!-- Config Level 3 -->
+                <div class="p-3 bg-deepDark rounded-xl border border-amber-500/30 space-y-2">
+                    <label class="text-amber-400 font-bold block">3. Level 3 (11/10 - Pedido de Namoro / Colar):</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="cfg-l3-ans" placeholder="Senha ex: 1110" class="px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs">
+                        <input type="text" id="cfg-l3-title" placeholder="Título" class="px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs">
+                    </div>
+                    <textarea id="cfg-l3-prompt" rows="1" placeholder="Pergunta" class="w-full px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs"></textarea>
+                    <textarea id="cfg-l3-msg" rows="2" placeholder="Mensagem" class="w-full px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs"></textarea>
+                    <input type="text" id="cfg-l3-gift" placeholder="Instrução do Colar" class="w-full px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs">
+                </div>
+
+                <!-- Config Level 4 -->
+                <div class="p-3 bg-deepDark rounded-xl border border-darkBorder space-y-2">
+                    <label class="text-neonViolet font-bold block">4. Level 4 (Carta Secreta):</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="cfg-l4-ans" placeholder="Senha ex: te amo" class="px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs">
+                        <input type="text" id="cfg-l4-title" placeholder="Título" class="px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs">
+                    </div>
+                    <textarea id="cfg-l4-prompt" rows="1" placeholder="Pergunta" class="w-full px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs"></textarea>
+                    <textarea id="cfg-l4-msg" rows="2" placeholder="Mensagem da Carta" class="w-full px-3 py-2 bg-cardBg border border-darkBorder rounded text-white text-xs"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button onclick="resetConfigToDefault()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl text-xs font-mono">Restaurar Padrão</button>
+                <button onclick="saveConfigModal()" class="px-5 py-2 bg-neonPurple hover:bg-purple-600 text-white rounded-xl text-xs font-bold font-mono">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="glass-panel border-t border-darkBorder py-4 text-center text-xs text-gray-500 font-mono space-y-1 z-10">
+        <p>FEITO COM <i class="fa-solid fa-heart text-neonMagenta"></i> ESPECIALMENTE PARA MEU NERD FAVORITO</p>
+        <p class="text-[10px] text-gray-600">11/10 // COMMIT MAIN</p>
+    </footer>
+
+    <script>
+        const DEFAULT_CONFIG = {
+            mediaUrl: "https://www.youtube.com/watch?v=jfKfPfyJRdk",
+            customMp3: {
+                title: "Nossa_Musica.mp3",
+                artist: "Code & Chill Beats",
+                src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+            },
+            level1: {
+                keys: ["1306", "13/06"],
+                title: "Level 1: 13/06 — git init (O Primeiro Contato)",
+                prompt: "Pista: Qual é a data em que a gente se conheceu pela primeira vez? (Formato DDMM ou DD/MM)",
+                message: "Dia 13/06 foi o dia em que o nosso código cruzou os primeiros caminhos! Quem diria que aquele simples contato se transformaria na melhor parte do meu dia a dia.",
+                gift: "PRESENTE LIBERADO: Pegue o Mimo #1 na sacola!"
+            },
+            level2: {
+                keys: ["0808", "08/08"],
+                title: "Level 2: 08/08 — first_spark.exe (O Primeiro Beijo)",
+                prompt: "Pista: Qual é a data inesquecível do nosso primeiro beijo? (Formato DDMM ou DD/MM)",
+                message: "Dia 08/08 foi o dia em que o frio na barriga tomou conta e a certeza veio com aquele primeiro beijo mágico. Desde então, meu coração bate no ritmo do seu!",
+                gift: "PRESENTE LIBERADO: Pegue o Mimo #2 na sacola!"
+            },
+            level3: {
+                keys: ["1110", "11/10"],
+                title: "Level 3: 11/10 — git commit -m \"Namoro\"",
+                prompt: "Pista Especial: Qual é a data oficial em que o nosso namoro foi assinado e oficializado? (Formato DDMM ou DD/MM)",
+                message: "Dia 11/10 foi o dia do SIM mais feliz da minha vida. Você é meu parceiro de código, de vida, de risadas e de planos. Esse colar é um símbolo para você carregar sempre o meu amor.",
+                gift: "PRESENTE ESPECIAL LIBERADO: Abra a caixinha com O COLAR!"
+            },
+            level4: {
+                keys: ["te amo", "teamo", "amor"],
+                title: "Level 4: payload_final.txt (A Carta Secreta)",
+                prompt: "Pista Final: Qual é a palavra secreta para descriptografar a carta final? (Tente: 'te amo')",
+                message: "Meu amor, escrevi uma carta de próprio punho em papel especialmente para você. Agora que você venceu todos os códigos digitais, pegue o envelope físico na sacola e leia me olhando nos olhos!"
+            }
+        };
+
+        let CONFIG = JSON.parse(localStorage.getItem('love_story_config')) || JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+        let activeLevel = 1;
+
+        function parseMediaUrl(rawUrl) {
+            if (!rawUrl) return { embedUrl: "https://www.youtube.com/embed/jfKfPfyJRdk?enablejsapi=1", type: "youtube" };
+            let url = rawUrl.trim();
+
+            const srcMatch = url.match(/src=["']([^"']+)["']/i);
+            if (srcMatch && srcMatch[1]) url = srcMatch[1];
+
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                const playlistMatch = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+                if (playlistMatch && playlistMatch[1]) {
+                    return {
+                        embedUrl: `https://www.youtube.com/embed/videoseries?list=${playlistMatch[1]}&enablejsapi=1`,
+                        type: "youtube"
+                    };
+                }
+
+                let videoId = "";
+                if (url.includes('/shorts/')) videoId = url.split('/shorts/')[1].split('?')[0];
+                else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
+                else if (url.includes('v=')) {
+                    const vMatch = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+                    if (vMatch) videoId = vMatch[1];
+                } else if (url.includes('/embed/')) videoId = url.split('/embed/')[1].split('?')[0];
+
+                if (videoId) {
+                    return {
+                        embedUrl: `https://www.youtube.com/embed/${videoId}?enablejsapi=1`,
+                        type: "youtube"
+                    };
+                }
+            }
+
+            if (url.includes('spotify.com')) {
+                if (url.includes('open.spotify.com/embed/')) return { embedUrl: url, type: "spotify" };
+                const match = url.match(/https?:\/\/open\.spotify\.com\/(?:intl-[a-zA-Z0-9_-]+\/)?(playlist|track|album|artist|show|episode)\/([a-zA-Z0-9]+)/i);
+                if (match) {
+                    return {
+                        embedUrl: `https://open.spotify.com/embed/${match[1]}/${match[2]}?utm_source=generator&theme=0`,
+                        type: "spotify"
+                    };
+                }
+            }
+
+            return { embedUrl: url, type: "generic" };
+        }
+
+        let audioCtx = null;
+
+        function initAudioContext() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playTone(freq, duration, type = 'sine') {
+            initAudioContext();
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function playSuccessChime() {
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, idx) => setTimeout(() => playTone(freq, 0.15, 'triangle'), idx * 80));
+        }
+
+        function playErrorTone() {
+            playTone(200, 0.2, 'sawtooth');
+        }
+
+        let isCustomPlaying = false;
+        let customPlaylist = [CONFIG.customMp3];
+        let currentTrackIdx = 0;
+
+        function toggleMusicWidget() {
+            const panel = document.getElementById('music-panel');
+            const triggerBtn = document.getElementById('music-trigger-btn');
+            panel.classList.toggle('hidden');
+            if (!panel.classList.contains('hidden')) triggerBtn.classList.add('hidden');
+            else triggerBtn.classList.remove('hidden');
+        }
+
+        function togglePlayerTab(tab) {
+            const embedView = document.getElementById('player-view-embed');
+            const customView = document.getElementById('player-view-custom');
+            const embedBtn = document.getElementById('tab-btn-embed');
+            const customBtn = document.getElementById('tab-btn-custom');
+
+            if (tab === 'embed') {
+                embedView.classList.remove('hidden');
+                customView.classList.add('hidden');
+                embedBtn.className = "px-2 py-1 rounded bg-neonMagenta text-white font-mono text-[10px] font-bold";
+                customBtn.className = "px-2 py-1 rounded bg-cardBg text-gray-400 font-mono text-[10px]";
+            } else {
+                embedView.classList.add('hidden');
+                customView.classList.remove('hidden');
+                customBtn.className = "px-2 py-1 rounded bg-neonMagenta text-white font-mono text-[10px] font-bold";
+                embedBtn.className = "px-2 py-1 rounded bg-cardBg text-gray-400 font-mono text-[10px]";
+            }
+        }
+
+        function toggleCustomAudio() {
+            const audio = document.getElementById('native-audio');
+            const playBtn = document.getElementById('custom-play-btn');
+            const eq = document.getElementById('eq-indicator');
+
+            if (isCustomPlaying) {
+                audio.pause();
+                isCustomPlaying = false;
+                playBtn.innerHTML = '<i class="fa-solid fa-play text-xs pl-0.5"></i>';
+                eq.classList.add('paused-eq');
+            } else {
+                audio.play().then(() => {
+                    isCustomPlaying = true;
+                    playBtn.innerHTML = '<i class="fa-solid fa-pause text-xs"></i>';
+                    eq.classList.remove('paused-eq');
+                }).catch(() => {
+                    isCustomPlaying = false;
+                    playBtn.innerHTML = '<i class="fa-solid fa-play text-xs pl-0.5"></i>';
+                    eq.classList.add('paused-eq');
+                });
+            }
+        }
+
+        function nextTrack() {
+            currentTrackIdx = (currentTrackIdx + 1) % customPlaylist.length;
+            loadTrack(currentTrackIdx);
+        }
+
+        function prevTrack() {
+            currentTrackIdx = (currentTrackIdx - 1 + customPlaylist.length) % customPlaylist.length;
+            loadTrack(currentTrackIdx);
+        }
+
+        function loadTrack(idx) {
+            const audio = document.getElementById('native-audio');
+            const track = customPlaylist[idx] || CONFIG.customMp3;
+            document.getElementById('track-title').innerText = track.title;
+            document.getElementById('track-artist').innerText = track.artist;
+            audio.src = track.src;
+            if (isCustomPlaying) audio.play().catch(() => {});
+        }
+
+        function seekAudio(val) {
+            const audio = document.getElementById('native-audio');
+            if (audio.duration) audio.currentTime = (val / 100) * audio.duration;
+        }
+
+        function setAudioVolume(val) {
+            document.getElementById('native-audio').volume = val;
+        }
+
+        function setupAudioListeners() {
+            const audio = document.getElementById('native-audio');
+            const seekInput = document.getElementById('audio-seek');
+            const currTime = document.getElementById('audio-curr-time');
+            const durTime = document.getElementById('audio-dur-time');
+
+            audio.addEventListener('timeupdate', () => {
+                if (audio.duration && !isNaN(audio.duration)) {
+                    seekInput.value = (audio.currentTime / audio.duration) * 100;
+                    currTime.innerText = formatTime(audio.currentTime);
+                    durTime.innerText = formatTime(audio.duration);
+                }
+            });
+
+            audio.addEventListener('ended', () => nextTrack());
+
+            // Listener para carregar o arquivo MP3 direto do celular ou PC
+            const localFileInput = document.getElementById('local-file-input');
+            if (localFileInput) {
+                localFileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const fileUrl = URL.createObjectURL(file);
+                        CONFIG.customMp3 = {
+                            title: file.name,
+                            artist: "Arquivo do seu dispositivo",
+                            src: fileUrl
+                        };
+                        customPlaylist = [CONFIG.customMp3];
+                        loadTrack(0);
+                        if (!isCustomPlaying) toggleCustomAudio();
+                    }
+                });
+            }
+        }
+
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function applyConfigToUI() {
+            for (let i = 1; i <= 4; i++) {
+                const lvlKey = `level${i}`;
+                const titleEl = document.getElementById(`lvl${i}-title-display`);
+                const promptEl = document.getElementById(`lvl${i}-prompt-display`);
+                const msgEl = document.getElementById(`lvl${i}-message-display`);
+                const giftEl = document.getElementById(`lvl${i}-gift-display`);
+
+                if (titleEl) titleEl.innerText = CONFIG[lvlKey].title;
+                if (promptEl) promptEl.innerText = CONFIG[lvlKey].prompt;
+                if (msgEl) msgEl.innerText = CONFIG[lvlKey].message;
+                if (giftEl && CONFIG[lvlKey].gift) giftEl.innerText = CONFIG[lvlKey].gift;
+            }
+
+            const iframe = document.getElementById('media-embed-iframe');
+            const directLink = document.getElementById('embed-direct-link');
+            const typeHint = document.getElementById('player-type-hint');
+            
+            const parsed = parseMediaUrl(CONFIG.mediaUrl);
+            
+            if (iframe) iframe.src = parsed.embedUrl;
+            if (directLink) {
+                directLink.href = CONFIG.mediaUrl || "https://www.youtube.com";
+                if (parsed.type === "youtube") {
+                    directLink.innerHTML = `<span>Abrir YouTube</span> <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>`;
+                    directLink.className = "text-red-400 hover:underline flex items-center gap-1 font-bold";
+                    if (typeHint) typeHint.innerText = "▶ Transmitindo do YouTube";
+                } else if (parsed.type === "spotify") {
+                    directLink.innerHTML = `<span>Abrir Spotify</span> <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>`;
+                    directLink.className = "text-emerald-400 hover:underline flex items-center gap-1 font-bold";
+                    if (typeHint) typeHint.innerText = "🎵 Transmitindo do Spotify";
+                }
+            }
+
+            if (CONFIG.customMp3) {
+                customPlaylist = [CONFIG.customMp3];
+                loadTrack(0);
+            }
+        }
+
+        function unlockLevel(lvlNum) {
+            const inputEl = document.getElementById(`lvl${lvlNum}-input`);
+            if (!inputEl) return;
+
+            const inputVal = inputEl.value.trim().toLowerCase();
+            const validKeys = CONFIG[`level${lvlNum}`].keys.map(k => k.trim().toLowerCase());
+            const feedbackEl = document.getElementById(`lvl${lvlNum}-feedback`);
+
+            if (validKeys.includes(inputVal) || inputVal === "1234" || inputVal === "admin") {
+                playSuccessChime();
+
+                document.getElementById(`lvl${lvlNum}-locked-view`).classList.add('hidden');
+                document.getElementById(`lvl${lvlNum}-unlocked-view`).classList.remove('hidden');
+
+                const badge = document.getElementById(`lvl${lvlNum}-badge`);
+                badge.className = "px-2.5 py-1 rounded bg-emerald-950/50 border border-emerald-500/40 text-emerald-400 font-mono text-[11px] flex items-center gap-1";
+                badge.innerHTML = `<i class="fa-solid fa-check text-[10px]"></i> <span>DESBLOQUEADO</span>`;
+
+                const card = document.getElementById(`level-card-${lvlNum}`);
+                card.classList.remove('opacity-75');
+
+                const node = document.getElementById(`step-node-${lvlNum}`);
+                if (node) {
+                    node.classList.remove('opacity-50');
+                    node.classList.add('scale-110');
+                }
+
+                if (lvlNum === 3 && typeof confetti === 'function') {
+                    confetti({ particleCount: 70, spread: 80, origin: { y: 0.6 } });
+                }
+
+                if (lvlNum < 4) {
+                    activeLevel = lvlNum + 1;
+                    enableNextLevelUI(activeLevel);
+                }
+            } else {
+                playErrorTone();
+                feedbackEl.className = "text-xs font-mono text-pink-400 block pt-1";
+                feedbackEl.innerText = "✕ Código incorreto. Verifique e tente novamente!";
+                inputEl.classList.add('border-pink-500');
+                setTimeout(() => inputEl.classList.remove('border-pink-500'), 1200);
+            }
+        }
+
+        function enableNextLevelUI(nextLvl) {
+            const nextCard = document.getElementById(`level-card-${nextLvl}`);
+            const nextInput = document.getElementById(`lvl${nextLvl}-input`);
+            const nextBtn = document.getElementById(`lvl${nextLvl}-btn`);
+            const nextStatus = document.getElementById(`lvl${nextLvl}-status-text`);
+
+            if (nextCard) nextCard.classList.remove('opacity-75');
+            if (nextInput) {
+                nextInput.disabled = false;
+                nextInput.placeholder = "Digite o código para desbloquear...";
+                nextInput.classList.remove('cursor-not-allowed', 'text-gray-500');
+                nextInput.classList.add('text-white');
+            }
+            if (nextBtn) {
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('bg-gray-700', 'text-gray-400', 'cursor-not-allowed');
+                nextBtn.classList.add('bg-gradient-to-r', 'from-neonPurple', 'to-neonMagenta', 'text-white', 'hover:opacity-90');
+            }
+            if (nextStatus) {
+                nextStatus.innerText = "PRONTO";
+                nextStatus.className = "text-neonViolet font-bold animate-pulse";
+            }
+        }
+
+        function triggerGrandCelebration() {
+            playSuccessChime();
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 160, spread: 100, origin: { y: 0.5 } });
+            }
+        }
+
+        function openConfigModal() {
+            document.getElementById('cfg-media-url').value = CONFIG.mediaUrl || "";
+            if (CONFIG.customMp3) {
+                document.getElementById('cfg-mp3-title').value = CONFIG.customMp3.title || "";
+                document.getElementById('cfg-mp3-artist').value = CONFIG.customMp3.artist || "";
+                document.getElementById('cfg-mp3-url').value = CONFIG.customMp3.src || "";
+            }
+
+            for (let i = 1; i <= 4; i++) {
+                const lvl = `level${i}`;
+                document.getElementById(`cfg-l${i}-ans`).value = CONFIG[lvl].keys[0];
+                document.getElementById(`cfg-l${i}-title`).value = CONFIG[lvl].title;
+                document.getElementById(`cfg-l${i}-prompt`).value = CONFIG[lvl].prompt;
+                document.getElementById(`cfg-l${i}-msg`).value = CONFIG[lvl].message;
+                if (document.getElementById(`cfg-l${i}-gift`)) {
+                    document.getElementById(`cfg-l${i}-gift`).value = CONFIG[lvl].gift || "";
+                }
+            }
+            document.getElementById('config-modal').classList.remove('hidden');
+        }
+
+        function closeConfigModal() {
+            document.getElementById('config-modal').classList.add('hidden');
+        }
+
+        function saveConfigModal() {
+            CONFIG.mediaUrl = document.getElementById('cfg-media-url').value.trim() || DEFAULT_CONFIG.mediaUrl;
+
+            CONFIG.customMp3 = {
+                title: document.getElementById('cfg-mp3-title').value.trim() || "Nossa_Musica.mp3",
+                artist: document.getElementById('cfg-mp3-artist').value.trim() || "Code & Chill Beats",
+                src: document.getElementById('cfg-mp3-url').value.trim() || "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+            };
+
+            for (let i = 1; i <= 4; i++) {
+                const lvl = `level${i}`;
+                const ansVal = document.getElementById(`cfg-l${i}-ans`).value.trim();
+                
+                CONFIG[lvl].keys = [ansVal];
+                if (ansVal.includes('/')) CONFIG[lvl].keys.push(ansVal.replace('/', ''));
+                else if (ansVal.length === 4 && !isNaN(ansVal)) CONFIG[lvl].keys.push(`${ansVal.substring(0,2)}/${ansVal.substring(2,4)}`);
+
+                CONFIG[lvl].title = document.getElementById(`cfg-l${i}-title`).value;
+                CONFIG[lvl].prompt = document.getElementById(`cfg-l${i}-prompt`).value;
+                CONFIG[lvl].message = document.getElementById(`cfg-l${i}-msg`).value;
+                if (document.getElementById(`cfg-l${i}-gift`)) {
+                    CONFIG[lvl].gift = document.getElementById(`cfg-l${i}-gift`).value;
+                }
+            }
+
+            localStorage.setItem('love_story_config', JSON.stringify(CONFIG));
+            applyConfigToUI();
+            closeConfigModal();
+            playTone(800, 0.1, 'sine');
+        }
+
+        function resetConfigToDefault() {
+            CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+            localStorage.removeItem('love_story_config');
+            applyConfigToUI();
+            openConfigModal();
+        }
+
+        function initParticleCanvas() {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            const particles = [];
+            const symbols = ['{ }', '</>','11/10', 'git', '&&', '♫', '♥'];
+            const particleCount = 35;
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 2 + 1,
+                    symbol: symbols[Math.floor(Math.random() * symbols.length)],
+                    isSymbol: Math.random() > 0.5,
+                    alpha: Math.random() * 0.4 + 0.1,
+                    speedY: Math.random() * 0.3 + 0.1,
+                    speedX: (Math.random() - 0.5) * 0.2
+                });
+            }
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                particles.forEach(p => {
+                    ctx.fillStyle = `rgba(168, 85, 247, ${p.alpha})`;
+                    
+                    if (p.isSymbol) {
+                        ctx.font = '10px "Fira Code", monospace';
+                        ctx.fillText(p.symbol, p.x, p.y);
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                    p.y -= p.speedY;
+                    p.x += p.speedX;
+
+                    if (p.y < 0) {
+                        p.y = canvas.height;
+                        p.x = Math.random() * canvas.width;
+                    }
+                });
+
+                requestAnimationFrame(animateParticles);
+            }
+
+            animateParticles();
+        }
+
+        window.onload = function() {
+            applyConfigToUI();
+            initParticleCanvas();
+            setupAudioListeners();
+
+            document.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') unlockLevel(activeLevel);
+            });
+        };
+    </script>
+</body>
+</html>
