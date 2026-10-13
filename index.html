@@ -929,6 +929,48 @@
             if (typeof confetti === 'function') {
                 confetti({ particleCount: 160, spread: 100, origin: { y: 0.5 } });
             }
+            
+            // NOVO: Mostrar o decodificador 3 segundos após ele comemorar
+            setTimeout(() => {
+                const decoder = document.getElementById('binary-decoder-section');
+                if (decoder) {
+                    decoder.classList.remove('hidden'); // Revela a caixa
+                    decoder.scrollIntoView({ behavior: 'smooth', block: 'center' }); // Rola a tela pra ela
+                }
+            }, 3000);
+        }
+
+        // NOVO: Função que traduz o binário para texto
+        function translateBinary() {
+            const input = document.getElementById('binary-input').value.trim();
+            const outputEl = document.getElementById('binary-output');
+            
+            if (!input) {
+                outputEl.innerText = "Aguardando inserção de dados...";
+                outputEl.className = "font-mono text-gray-500 text-sm text-center";
+                return;
+            }
+
+            try {
+                // Remove espaços em excesso e separa os blocos de 0s e 1s
+                const binaryArray = input.replace(/\s+/g, ' ').split(' ');
+                
+                // Converte cada bloco binário para texto
+                const text = binaryArray.map(bin => {
+                    // Verifica se tem apenas 0s e 1s
+                    if (!/^[01]+$/.test(bin)) throw new Error("Inválido");
+                    return String.fromCharCode(parseInt(bin, 2));
+                }).join('');
+                
+                outputEl.innerText = text;
+                outputEl.className = "font-mono text-neonMagenta font-bold text-base sm:text-lg text-center text-glow-violet uppercase tracking-widest";
+                playSuccessChime(); // Toca o som de sucesso
+                
+            } catch (error) {
+                outputEl.innerText = "ERRO: Criptografia não reconhecida. Verifique se digitou apenas 0 e 1 corretamente.";
+                outputEl.className = "font-mono text-red-400 text-xs sm:text-sm text-center";
+                playErrorTone(); // Toca o som de erro
+            }
         }
 
         function openConfigModal() {
