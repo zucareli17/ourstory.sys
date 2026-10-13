@@ -968,16 +968,16 @@
         }
 
         // NOVO: Função que traduz o binário para texto
-        function translateBinary() {
-            const input = document.getElementById('binary-input').value.trim();
+       function translateBinary() {
+            const inputEl = document.getElementById('binary-input');
+            let input = inputEl.value.trim();
             const outputEl = document.getElementById('binary-output');
             
             if (!input) {
-                outputEl.innerText = "Aguardando inserção de dados...";
-                outputEl.className = "font-mono text-gray-500 text-sm text-center";
-                return;
+                // Se vazio, coloca um exemplo 
+                input = "1011 1010"; 
+                inputEl.value = input; 
             }
-
             try {
                 // Remove espaços em excesso e separa os blocos de 0s e 1s
                 const binaryArray = input.replace(/\s+/g, ' ').split(' ');
