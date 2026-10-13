@@ -967,8 +967,8 @@
             }, 3000);
         }
 
-        // NOVO: Função que traduz o binário para texto
-       function translateBinary() {
+         // NOVO: Função que traduz o binário para texto
+        function translateBinary() {
             const inputEl = document.getElementById('binary-input');
             let input = inputEl.value.trim();
             const outputEl = document.getElementById('binary-output');
@@ -978,23 +978,25 @@
                 input = "1011 1010"; 
                 inputEl.value = input; 
             }
+
             try {
-                // Remove espaços em excesso e separa os blocos de 0s e 1s
-                const binaryArray = input.replace(/\s+/g, ' ').split(' ');
+                // Separa a string digitada pelos espaços (em vez de remover)
+                const binaryBlocks = input.split(/\s+/);
                 
-                // Converte cada bloco binário para texto
-                const text = binaryArray.map(bin => {
-                    // Verifica se tem apenas 0s e 1s
+                // Converte cada bloco isoladamente de binário (base 2) para decimal (base 10)
+                const decimalValues = binaryBlocks.map(bin => {
                     if (!/^[01]+$/.test(bin)) throw new Error("Inválido");
-                    return String.fromCharCode(parseInt(bin, 2));
-                }).join('');
+                    return parseInt(bin, 2).toString(10);
+                });
                 
-                outputEl.innerText = text;
-                outputEl.className = "font-mono text-neonMagenta font-bold text-base sm:text-lg text-center text-glow-violet uppercase tracking-widest";
+                // Junta os números traduzidos usando um espaço entre eles
+                outputEl.innerText = decimalValues.join(' ');
+                outputEl.className = "font-mono text-neonMagenta font-bold text-base sm:text-lg text-center text-glow-violet tracking-widest break-words";
+                
                 playSuccessChime(); // Toca o som de sucesso
                 
             } catch (error) {
-                outputEl.innerText = "ERRO: Criptografia não reconhecida. Verifique se digitou apenas 0 e 1 corretamente.";
+                outputEl.innerText = "ERRO: Digite os blocos de 0 e 1 separados por espaço.";
                 outputEl.className = "font-mono text-red-400 text-xs sm:text-sm text-center";
                 playErrorTone(); // Toca o som de erro
             }
